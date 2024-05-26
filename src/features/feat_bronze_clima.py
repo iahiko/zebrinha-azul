@@ -8,13 +8,9 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Importar a classe DatabaseOps do módulo utils.database_operations
-src_dir = os.path.join(os.getcwd().split('src')[0], 'src')
-sys.path.insert(0, src_dir)
-
-from utils.database_operations import DatabaseOps
-
 src_dir = os.path.join(os.getcwd().split('src')[0], 'src','utils')
 sys.path.insert(0, src_dir)
+from utils.database_operations import DatabaseOps
 
 class ClimateData:
     """
@@ -26,11 +22,14 @@ class ClimateData:
         ref_day (int): Dia de referência.
         local_dir (str): Diretório local onde os dados serão armazenados.
     """
-    def __init__(self):
+    def __init__(self, json_cities: str, tamanho_amostral: int, insert_method: str='append'):
         self.today = datetime.now().date()
         self.ref_month = self.today.month
         self.ref_day = self.today.day
         self.local_dir = None  # Diretório local onde os dados serão armazenados
+        self.json_cities = json_cities
+        self.tamanho_amostral = tamanho_amostral # quantidade de amostras que iremos extrair
+        self.insert_method = insert_method # metodo de inserção no banco de dados
 
     # Criação do diretório local para armazenar os dados meteorológicos
     def create_local_directory(self, ref_month, ref_day):
@@ -58,13 +57,13 @@ class ClimateData:
         Returns:
             DataFrame: DataFrame contendo informações das cidades brasileiras.
         """
-        with open("city.list.json", encoding='utf-8') as my_json:
+        with open(self.json_cities, encoding='utf-8') as my_json:
             city_data = json.load(my_json)
             df_id_list = pd.DataFrame(city_data)
 
             df_id_list['id'] = df_id_list['id'].astype(int)
             br_citys = df_id_list[df_id_list['country'] == 'BR']  
-            br_cidades = br_citys.sample(n=5)  # Seleciona aleatoriamente 5 cidades
+            br_cidades = br_citys.sample(n=self.tamanho_amostral)  # Seleciona aleatoriamente 5 cidades
             return br_cidades
 
     # Coleta os dados meteorológicos para as cidades selecionadas
@@ -243,11 +242,11 @@ class ClimateData:
         """
         try:
             # Inserir os dados no banco de dados
-            database.insert(dataframe=df, schema=schema, table=tabela, if_exists='append')
+            database.insert(dataframe=df, schema=schema, table=tabela, if_exists=self.insert_method)
             return True  # Retornar True se a inserção for bem-sucedida
         except Exception as e:
             # Se ocorrer um erro durante a inserção, imprimir mensagem de erro e retornar False
-            print(f"Erro durante a inserção no banco de dados: {e}")
+            print(f"[erro][feat_bronze_clima][def: insert_database]\nErro durante a inserção no banco de dados: {e}")
             return False 
     
     # Executa o pipeline completo
@@ -286,5 +285,5 @@ class ClimateData:
 
         except Exception as e:
             # Se ocorrer um erro durante o pipeline, imprimir mensagem de erro e retornar False
-            print(f"Erro durante a execução do pipeline: {e}")
+            print(f"[erro][feat_bronze_clima][def: pipeline]\nErro durante a execução do pipeline: {e}")
             return False 

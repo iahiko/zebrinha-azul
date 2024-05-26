@@ -7,19 +7,18 @@ import pytz
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-# Importações locais
-src_dir = os.path.join(os.getcwd().split('src')[0], 'src')
-sys.path.insert(0, src_dir)
-from utils.database_operations import DatabaseOps
 src_dir = os.path.join(os.getcwd().split('src')[0], 'src','utils')
 sys.path.insert(0, src_dir)
+from utils.database_operations import DatabaseOps
+
+
 
 class TrafficData:
     """
     Classe para coleta e processamento de dados de tráfego entre cidades usando a API do Google Maps.
     """
 
-    def __init__(self):
+    def __init__(self, insert_method: str='append'):
         """
         Inicializa a instância da classe TrafficData com data atual e outras variáveis necessárias para a integração dos dados.
         """
@@ -30,6 +29,8 @@ class TrafficData:
         self.cidades_origem = []  # Lista para armazenar as cidades de origem
         self.cidades_destino = []  # Lista para armazenar as cidades de destino
         self.df_trafego = pd.DataFrame()  # DataFrame para armazenar os dados de tráfego
+        self.insert_method = insert_method # metodo de inserção no banco de dados
+
 
     # Função para obter dados da API de Directions
     def get_directions_data(self, origin, destination):
@@ -108,7 +109,7 @@ class TrafficData:
         self.df_trafego['id_city_destino'] = self.cidades_destino  # Adiciona a cidade de destino
         self.df_trafego['dt_ingestao'] = self.today  # Adiciona a data de ingestão
 
-    def connect_databases(self):
+    def connect_databases():
         """
         Método para conectar ao banco de dados.
         """
@@ -116,6 +117,8 @@ class TrafficData:
 
         database = DatabaseOps()
         database_connection = database.connect_db()
+    
+    connect_databases()
 
     def insert_database(self, df, schmea, tabela):
         """
@@ -130,10 +133,10 @@ class TrafficData:
         bool: True se a inserção for bem-sucedida, False caso contrário.
         """
         try:
-            database.insert(dataframe=df, schema=schmea, table=tabela, if_exists='append')
+            database.insert(dataframe=df, schema=schmea, table=tabela, if_exists=self.insert_method)
             return True  # Retorna True se a inserção for bem-sucedida
         except Exception as e:
-            print(f"Erro durante a inserção no banco de dados: {e}")
+            print(f"[erro][feat_bronze_transito][def: insert_database]\nErro durante a inserção no banco de dados: {e}")
             return False  # Retorna False em caso de erro na inserção
 
     def pipeline(self):
@@ -151,5 +154,5 @@ class TrafficData:
             return self.df_trafego  # Retorna os dados de tráfego processados
 
         except Exception as e:
-            print(f"Erro durante a inserção no banco de dados: {e}")
+            print(f"[erro][feat_bronze_transito][def: pipeline]\nErro durante a inserção no banco de dados: {e}")
             return False  # Retorna False em caso de erro durante o pipeline

@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Importando DatabaseOps para operações de banco de dados
+src_dir = os.path.join(os.getcwd().split('src')[0], 'src','utils')
+sys.path.insert(0, src_dir)
 from utils.database_operations import DatabaseOps  
 
 class IntegracaoSilver:
@@ -20,13 +22,14 @@ class IntegracaoSilver:
         ref_day (int): Dia de referência.
     """
 
-    def __init__(self):
+    def __init__(self, insert_method: str='append'):
         """
         Método construtor da classe IntegracaoSilver.
         """
         self.today = datetime.now().date()  # Define a data atual
         self.ref_month = self.today.month  # Define o mês de referência
         self.ref_day = self.today.day  # Define o dia de referência
+        self.insert_method = insert_method # metodo de inserção no banco de dados
 
     def silver_city_information(self):
         """
@@ -118,7 +121,7 @@ class IntegracaoSilver:
 
         return dir_wind
 
-    def connect_databases(self):
+    def connect_databases():
         """
         Método para conectar ao banco de dados.
         """
@@ -126,6 +129,7 @@ class IntegracaoSilver:
 
         database = DatabaseOps()
         database_connection = database.connect_db()
+    connect_databases()
 
     def insert_database(self, df, schema, table):
         """
@@ -140,10 +144,10 @@ class IntegracaoSilver:
             bool: True se a inserção for bem-sucedida, False caso contrário.
         """
         try:
-            database.insert(dataframe=df, schema=schema, table=table, if_exists='append')
+            database.insert(dataframe=df, schema=schema, table=table, if_exists=self.insert_method)
             return True 
         except Exception as e:
-            print(f"Erro durante a inserção no banco de dados: {e}")
+            print(f"[erro][feat_silver_clima][def: insert_database]\nErro durante a inserção no banco de dados: {e}")
             return False 
 
     def pipeline(self):
@@ -172,5 +176,5 @@ class IntegracaoSilver:
 
             return True
         except Exception as e:
-            print(f"Erro durante a inserção no banco de dados: {e}")
+            print(f"[erro][feat_silver_clima][def: pipeline]\nErro durante a inserção no banco de dados: {e}")
             return False 
