@@ -74,12 +74,9 @@ API_CLIMA_KEY="SUA_CHAVE"
 SERVER="SERVIDOR_BANCO"
 ```
 
-## Diagrama Relacional
-
 Para acessar o diagrama relacional, veja a imagem abaixo:
 
-<img src="./src/images/diagrama.png" alt="Diagrama Relacional">
-
+<img src="https://github.com/iahiko/zebrinha-azul/blob/main/src/imagens/diagrama.png" alt="Diagrama Relacional">
 
 ---
 
